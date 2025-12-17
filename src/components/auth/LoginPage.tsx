@@ -106,7 +106,7 @@ export const LoginPage: React.FC = () => {
                 </form>
 
                 <div className="mt-8 text-center">
-                    <p className="text-[#6B7280] text-xs font-mono">SYSTEM V1.0 // UNIVERSE.AERO</p>
+                    <p className="text-[#6B7280] text-xs font-mono">SYSTEM V1.0 // ALBI.SUBORBITAL</p>
                 </div>
             </motion.div>
         </div>

@@ -33,7 +33,7 @@ export const Dashboard: React.FC = () => {
     return (
         <div className="grid-stack w-full h-full">
 
-            {/* Map Area: 9x8 */}
+            {/* Map Area: 9x9 */}
             <GridWidget id="map" x={0} y={0} w={9} h={9} minH={4} minW={6} className="z-0">
                 <div className="w-full h-full relative rounded-xl overflow-hidden border border-white/5 shadow-2xl">
                     <Globe />
