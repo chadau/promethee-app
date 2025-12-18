@@ -2,6 +2,8 @@ import React from 'react';
 import { Wifi, Clock } from 'lucide-react';
 import logo from '../assets/logo.png';
 
+import { VoiceVisualizer } from './voice/VoiceVisualizer';
+
 export const TopBar: React.FC = () => {
     return (
         <header className="h-24 w-full fixed top-0 left-0 z-50 bg-[#0E1419]/90 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 shadow-lg">
@@ -14,14 +16,18 @@ export const TopBar: React.FC = () => {
                 </h1>
             </div>
 
-            {/* Center: Mission Info (Optional, kept minimal for now) */}
-            <div className="hidden md:flex items-center gap-2">
-                <span className="text-muted-gray text-xs uppercase tracking-widest">Mission ID:</span>
-                <span className="text-tech-green font-mono font-medium">ALPHA-09</span>
+            {/* Center: Mission Info */}
+            <div className="hidden md:flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                    <span className="text-muted-gray text-xs uppercase tracking-widest">Mission ID:</span>
+                    <span className="text-tech-green font-mono font-medium">ALPHA-09</span>
+                </div>
             </div>
 
             {/* Right: Status Indicators */}
             <div className="flex items-center gap-6">
+
+                <VoiceVisualizer />
 
                 {/* Timer */}
                 <div className="flex items-center gap-2 text-light-gray">

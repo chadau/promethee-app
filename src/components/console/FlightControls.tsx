@@ -1,10 +1,19 @@
 import React from 'react';
 import { useFlightStore } from '../../store/useFlightStore';
+import { useVoiceAssistant } from '../../context/VoiceAssistantContext';
 import { Power, PlaneTakeoff, Home, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 
 export const FlightControls: React.FC = () => {
     const { isArmed, setArmed, setFlightMode } = useFlightStore();
+    const { playArmed } = useVoiceAssistant();
+
+    const handleToggleArm = () => {
+        if (!isArmed) {
+            playArmed();
+        }
+        setArmed(!isArmed);
+    };
 
     return (
         <div className="h-full flex flex-col gap-2 p-3 bg-[#0E1419]/90 backdrop-blur-md rounded-xl border border-white/5 shadow-2xl">
@@ -13,7 +22,7 @@ export const FlightControls: React.FC = () => {
             <div className="flex-1 flex gap-2">
                 {/* ARM / DISARM Switch Button */}
                 <button
-                    onClick={() => setArmed(!isArmed)}
+                    onClick={handleToggleArm}
                     className={clsx(
                         "flex-1 rounded-lg border flex flex-col items-center justify-center transition-all duration-300",
                         isArmed
