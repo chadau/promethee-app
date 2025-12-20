@@ -6,7 +6,7 @@ import clsx from 'clsx';
 
 export const FlightControls: React.FC = () => {
     const { isArmed, setArmed, setFlightMode } = useFlightStore();
-    const { playArmed } = useVoiceAssistant();
+    const { playArmed, playHomeReturn, playTakeoff } = useVoiceAssistant();
 
     const handleToggleArm = () => {
         if (!isArmed) {
@@ -39,14 +39,22 @@ export const FlightControls: React.FC = () => {
                     <ActionButton
                         label="TAKEOFF"
                         icon={PlaneTakeoff}
-                        onClick={() => { if (isArmed) setFlightMode('AUTO'); }}
+                        onClick={() => {
+                            if (isArmed) {
+                                setFlightMode('AUTO');
+                                playTakeoff();
+                            }
+                        }}
                         disabled={!isArmed}
                     />
                     <ActionButton
                         label="RTH"
                         icon={Home}
                         color="amber"
-                        onClick={() => setFlightMode('RTH')}
+                        onClick={() => {
+                            setFlightMode('RTH');
+                            playHomeReturn();
+                        }}
                     />
                 </div>
             </div>

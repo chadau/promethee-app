@@ -9,6 +9,7 @@ import { FlightControls } from '../console/FlightControls';
 import { Globe } from '../Globe';
 import { GridWidget } from './GridWidget';
 import { TelemetryCard } from '../TelemetryCard';
+import { VideoFeedWidget } from './VideoFeedWidget';
 import { Navigation, Gauge, Zap } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
@@ -33,10 +34,17 @@ export const Dashboard: React.FC = () => {
     return (
         <div className="grid-stack w-full h-full">
 
-            {/* Map Area: 9x9 */}
-            <GridWidget id="map" x={0} y={0} w={9} h={9} minH={4} minW={6} className="z-0">
+            {/* Map Area: 9x6 (Reduced Height) */}
+            <GridWidget id="map" x={0} y={0} w={5} h={11} minH={4} minW={5} className="z-0">
                 <div className="w-full h-full relative rounded-xl overflow-hidden border border-white/5 shadow-2xl">
                     <Globe />
+                </div>
+            </GridWidget>
+
+            {/* Video Feed Widget (New) */}
+            <GridWidget id="video" x={5} y={0} w={4} h={11} minW={3} minH={3} className="z-10">
+                <div className="w-full h-full overflow-hidden">
+                    <VideoFeedWidget />
                 </div>
             </GridWidget>
 
@@ -59,8 +67,8 @@ export const Dashboard: React.FC = () => {
                 </div>
             </GridWidget>
 
-            {/* Telemetry: Speed (Middle Right) */}
-            <GridWidget id="speed" x={9} y={4} w={3} h={3} minW={2} className="z-10">
+            {/* Telemetry: Speed (Middle Right) - Moved Up */}
+            <GridWidget id="speed" x={9} y={3} w={3} h={3} minW={2} className="z-10">
                 <div className="w-full h-full overflow-hidden">
                     <TelemetryCard
                         title="Ground Speed"
@@ -76,8 +84,8 @@ export const Dashboard: React.FC = () => {
                 </div>
             </GridWidget>
 
-            {/* Telemetry: Battery (Bottom Right) */}
-            <GridWidget id="battery" x={9} y={8} w={3} h={3} minW={2} className="z-10">
+            {/* Telemetry: Battery (Bottom Right) - Moved Up */}
+            <GridWidget id="battery" x={9} y={6} w={3} h={3} minW={2} className="z-10">
                 <div className="w-full h-full overflow-hidden">
                     <TelemetryCard
                         title="Battery"
@@ -85,9 +93,6 @@ export const Dashboard: React.FC = () => {
                         unit="%"
                         icon={Zap}
                         className="h-full bg-[#0E1419]/90 backdrop-blur-md border-white/5 shadow-[0_4px_20px_rgba(0,0,0,0.35)] border-solar-amber/30 hover:border-solar-amber/60"
-                    // Note: overriding specific border colors might need !important or specific handling if TelemetryCard imposes its own border.
-                    // Assuming TelemetryCard default style is okay or we overwrite.
-                    // Actually TelemetryCard has default styling. I'll stick to passing children.
                     >
                         <div className="flex gap-1 mt-2">
                             {[...Array(8)].map((_, i) => (
@@ -99,22 +104,22 @@ export const Dashboard: React.FC = () => {
                 </div>
             </GridWidget>
 
-            {/* Console: Logs: 3x4 */}
-            <GridWidget id="logs" x={0} y={8} w={3} h={4} minH={2} minW={2} className="z-10">
+            {/* Console: Logs: Moved to fit next to video */}
+            <GridWidget id="logs" x={0} y={11} w={3} h={4} minH={2} minW={2} className="z-10">
                 <div className="w-full h-full overflow-hidden">
                     <SystemLogs />
                 </div>
             </GridWidget>
 
-            {/* Console: Instruments: 3x4 */}
-            <GridWidget id="instruments" x={3} y={8} w={3} h={4} minH={2} minW={2} className="z-10">
+            {/* Console: Instruments: Moved to bottom row */}
+            <GridWidget id="instruments" x={3} y={11} w={3} h={4} minH={2} minW={2} className="z-10">
                 <div className="w-full h-full overflow-hidden">
                     <FlightInstruments />
                 </div>
             </GridWidget>
 
-            {/* Console: Controls: 3x4 */}
-            <GridWidget id="controls" x={6} y={8} w={3} h={4} minH={2} minW={2} className="z-10">
+            {/* Console: Controls: Moved to bottom row */}
+            <GridWidget id="controls" x={6} y={11} w={3} h={4} minH={2} minW={2} className="z-10">
                 <div className="w-full h-full overflow-hidden">
                     <FlightControls />
                 </div>

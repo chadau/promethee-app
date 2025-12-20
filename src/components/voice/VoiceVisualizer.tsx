@@ -34,16 +34,29 @@ export const VoiceVisualizer: React.FC = () => {
                 audioAnalyser.getByteFrequencyData(dataArray);
             }
 
-            // Draw 5 bars
+            // Draw 5 bars with symmetric modulation (Center = Low Freq/Bass, Edges = High Freq)
             for (let i = 0; i < barCount; i++) {
                 let intensity = 0;
 
                 if (isSpeaking && audioAnalyser) {
-                    // Sample the frequency data: evenly separate 5 chunks
-                    const step = Math.floor(dataArray.length / barCount);
-                    const index = i * step;
-                    // Simple average or max of the chunk
-                    intensity = dataArray[index] / 255;
+                    // We want 3 distinct frequency bands for 5 bars:
+                    // Bar 2 (Center) -> Band 0 (Bass)
+                    // Bars 1, 3 -> Band 1 (Mids)
+                    // Bars 0, 4 -> Band 2 (Highs)
+
+                    // Distance from center (0, 1, or 2)
+                    const distFromCenter = Math.abs(i - 2);
+
+                    // Simple logic: mapping distFromCenter to frequency chunks
+                    // 0 -> closest to 0Hz (Bass)
+                    // 2 -> higher freq
+
+                    const step = Math.floor(dataArray.length / 3); // Divide spectrum into 3 bands
+                    const dataIndex = distFromCenter * step;
+
+                    // Average a small chunk around the dataIndex to make it smoother
+                    const value = dataArray[dataIndex];
+                    intensity = value / 255;
                 }
 
                 // Calculate height: minHeight + intensity * (max - min)
