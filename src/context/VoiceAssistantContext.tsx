@@ -74,11 +74,11 @@ export const VoiceAssistantProvider: React.FC<{ children: React.ReactNode }> = (
             onstop: () => {
                 setIsSpeaking(false);
             },
-            onloaderror: (id, error) => {
+            onloaderror: (_id, error) => {
                 console.error(`Error loading audio ${path}:`, error);
                 setIsSpeaking(false);
             },
-            onplayerror: (id, error) => {
+            onplayerror: (_id, error) => {
                 console.error(`Error playing audio ${path}:`, error);
                 setIsSpeaking(false);
             }

@@ -13,12 +13,21 @@ interface FlightState {
     isArmed: boolean;
     flightMode: FlightMode;
     logs: LogEntry[];
+    controlInput: ControlInput;
 
     // Actions
     setArmed: (armed: boolean) => void;
     setFlightMode: (mode: FlightMode) => void;
     addLog: (message: string, type?: LogEntry['type']) => void;
     clearLogs: () => void;
+    setControlInput: (input: { pitch: number; roll: number; yaw: number; throttle: number }) => void;
+}
+
+export interface ControlInput {
+    pitch: number;
+    roll: number;
+    yaw: number;
+    throttle: number;
 }
 
 export const useFlightStore = create<FlightState>((set) => ({
@@ -74,4 +83,7 @@ export const useFlightStore = create<FlightState>((set) => ({
     })),
 
     clearLogs: () => set({ logs: [] }),
+
+    controlInput: { pitch: 0, roll: 0, yaw: 0, throttle: 0 },
+    setControlInput: (input) => set({ controlInput: input }),
 }));

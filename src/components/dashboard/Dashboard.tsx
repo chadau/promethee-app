@@ -10,6 +10,7 @@ import { Globe } from '../Globe';
 import { GridWidget } from './GridWidget';
 import { TelemetryCard } from '../TelemetryCard';
 import { VideoFeedWidget } from './VideoFeedWidget';
+import { ManualControlWidget } from './ManualControlWidget';
 import { Navigation, Gauge, Zap } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
@@ -35,14 +36,14 @@ export const Dashboard: React.FC = () => {
         <div className="grid-stack w-full h-full">
 
             {/* Map Area: 9x6 (Reduced Height) */}
-            <GridWidget id="map" x={0} y={0} w={5} h={11} minH={4} minW={5} className="z-0">
+            <GridWidget id="map" x={0} y={0} w={5} h={13} minH={4} minW={5} className="z-0">
                 <div className="w-full h-full relative rounded-xl overflow-hidden border border-white/5 shadow-2xl">
                     <Globe />
                 </div>
             </GridWidget>
 
             {/* Video Feed Widget (New) */}
-            <GridWidget id="video" x={5} y={0} w={4} h={11} minW={3} minH={3} className="z-10">
+            <GridWidget id="video" x={5} y={0} w={4} h={13} minW={3} minH={3} className="z-10">
                 <div className="w-full h-full overflow-hidden">
                     <VideoFeedWidget />
                 </div>
@@ -104,22 +105,29 @@ export const Dashboard: React.FC = () => {
                 </div>
             </GridWidget>
 
+            {/* Manual Control (Bottom Right) */}
+            <GridWidget id="manual-control" x={3} y={13} w={3} h={4} minW={2} className="z-10">
+                <div className="w-full h-full overflow-hidden">
+                    <ManualControlWidget />
+                </div>
+            </GridWidget>
+
             {/* Console: Logs: Moved to fit next to video */}
-            <GridWidget id="logs" x={0} y={11} w={3} h={4} minH={2} minW={2} className="z-10">
+            <GridWidget id="logs" x={9} y={9} w={3} h={4} minH={2} minW={2} className="z-10">
                 <div className="w-full h-full overflow-hidden">
                     <SystemLogs />
                 </div>
             </GridWidget>
 
             {/* Console: Instruments: Moved to bottom row */}
-            <GridWidget id="instruments" x={3} y={11} w={3} h={4} minH={2} minW={2} className="z-10">
+            <GridWidget id="instruments" x={0} y={13} w={3} h={4} minH={2} minW={2} className="z-10">
                 <div className="w-full h-full overflow-hidden">
                     <FlightInstruments />
                 </div>
             </GridWidget>
 
             {/* Console: Controls: Moved to bottom row */}
-            <GridWidget id="controls" x={6} y={11} w={3} h={4} minH={2} minW={2} className="z-10">
+            <GridWidget id="controls" x={6} y={13} w={3} h={4} minH={2} minW={2} className="z-10">
                 <div className="w-full h-full overflow-hidden">
                     <FlightControls />
                 </div>

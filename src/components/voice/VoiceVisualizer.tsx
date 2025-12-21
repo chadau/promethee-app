@@ -4,7 +4,7 @@ import { useVoiceAssistant } from '../../context/VoiceAssistantContext';
 export const VoiceVisualizer: React.FC = () => {
     const { isSpeaking, audioAnalyser } = useVoiceAssistant();
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const animationFrameRef = useRef<number>();
+    const animationFrameRef = useRef<number | null>(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
