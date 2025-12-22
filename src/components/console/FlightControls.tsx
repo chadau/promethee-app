@@ -5,7 +5,9 @@ import { Power, PlaneTakeoff, Home, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 
 export const FlightControls: React.FC = () => {
-    const { isArmed, setArmed, setFlightMode } = useFlightStore();
+    const isArmed = useFlightStore(state => state.isArmed);
+    const setArmed = useFlightStore(state => state.setArmed);
+    const setFlightMode = useFlightStore(state => state.setFlightMode);
     const { playArmed, playHomeReturn, playTakeoff } = useVoiceActions();
 
     const handleToggleArm = () => {

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Viewer, Entity } from 'resium';
+import { Viewer, Entity, PointGraphics, CylinderGraphics } from 'resium';
 import type { CesiumComponentRef } from 'resium';
-import { Cartesian3, Color, Math as CesiumMath, Transforms, HeadingPitchRoll, Entity as CesiumEntity } from 'cesium';
+import { Cartesian3, Color, Math as CesiumMath, Transforms, HeadingPitchRoll, Entity as CesiumEntity, CallbackProperty, JulianDate } from 'cesium';
 import { useFlightStore } from '../store/useFlightStore';
 import { Navigation, Crosshair } from 'lucide-react';
 
@@ -86,32 +86,44 @@ export const Globe: React.FC = () => {
                 fullscreenButton={false}
                 className="w-full h-full"
             >
-                {/* Drone Entity */}
+                {/* Tracked Target (Point) */}
                 <Entity
                     ref={entityRef}
                     name="Prométhée Drone"
-                    position={dronePosition}
-                    point={{ pixelSize: 15, color: Color.CYAN, outlineColor: Color.WHITE, outlineWidth: 2 }}
+                    position={new CallbackProperty(() => {
+                        const { position } = useFlightStore.getState();
+                        return Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
+                    }, false)}
                     description="Target Drone Unit"
-                    viewFrom={new Cartesian3(0.0, -0.1, 500.0)} // Top-down view closer to the drone
+                    viewFrom={new Cartesian3(0.0, -0.1, 500.0)}
                 >
-                    {/* Visual Heading Cone/Arrow */}
-                    <Entity
-                        position={dronePosition}
-                        orientation={Transforms.headingPitchRollQuaternion(
-                            dronePosition,
+                    <PointGraphics pixelSize={15} color={Color.CYAN} outlineColor={Color.WHITE} outlineWidth={2} />
+                </Entity>
+
+                {/* Visual Heading Cone/Arrow */}
+                <Entity
+                    position={new CallbackProperty(() => {
+                        const { position } = useFlightStore.getState();
+                        return Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
+                    }, false)}
+                    orientation={new CallbackProperty(() => {
+                        const { position } = useFlightStore.getState();
+                        const dronePos = Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
+                        return Transforms.headingPitchRollQuaternion(
+                            dronePos,
                             new HeadingPitchRoll(
-                                CesiumMath.toRadians(position.heading - 90),
-                                CesiumMath.toRadians(90), // Pitch 90 to lay flat
+                                CesiumMath.toRadians(position.heading - 90 + 180),
+                                CesiumMath.toRadians(90),
                                 0
                             )
-                        )}
-                        cylinder={{
-                            length: 50.0,
-                            topRadius: 0.0,
-                            bottomRadius: 20.0,
-                            material: Color.CYAN.withAlpha(0.7),
-                        }}
+                        );
+                    }, false)}
+                >
+                    <CylinderGraphics
+                        length={50.0}
+                        topRadius={0.0}
+                        bottomRadius={20.0}
+                        material={Color.CYAN.withAlpha(0.7)}
                     />
                 </Entity>
             </Viewer>

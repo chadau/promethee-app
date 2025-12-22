@@ -11,9 +11,13 @@ import { GridWidget } from './GridWidget';
 import { TelemetryCard } from '../TelemetryCard';
 import { VideoFeedWidget } from './VideoFeedWidget';
 import { ManualControlWidget } from './ManualControlWidget';
+import { SimulationEngine } from '../logic/SimulationEngine';
 import { Navigation, Gauge, Zap } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
+    // Mount simulation engine (headless)
+    // It runs the physics loop when drone is Armed
+
     const gridRef = useRef<GridStack | null>(null);
 
     useEffect(() => {
@@ -34,6 +38,7 @@ export const Dashboard: React.FC = () => {
 
     return (
         <div className="grid-stack w-full h-full">
+            <SimulationEngine />
 
             {/* Map Area: 9x6 (Reduced Height) */}
             <GridWidget id="map" x={0} y={0} w={5} h={13} minH={4} minW={5} className="z-0">
