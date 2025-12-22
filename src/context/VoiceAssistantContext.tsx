@@ -1,18 +1,22 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { Howl, Howler } from 'howler';
 
-interface VoiceAssistantContextType {
+interface VoiceAssistantState {
     isSpeaking: boolean;
+    audioAnalyser: AnalyserNode | null;
+}
+
+interface VoiceAssistantActions {
     playGreeting: () => Promise<void>;
     playArmed: () => Promise<void>;
     playHomeReturn: () => Promise<void>;
     playTakeoff: () => Promise<void>;
     playCameraActivated: () => Promise<void>;
     playCameraDeactivated: () => Promise<void>;
-    audioAnalyser: AnalyserNode | null;
 }
 
-const VoiceAssistantContext = createContext<VoiceAssistantContextType | undefined>(undefined);
+const VoiceAssistantStateContext = createContext<VoiceAssistantState | undefined>(undefined);
+const VoiceAssistantActionsContext = createContext<VoiceAssistantActions | undefined>(undefined);
 
 export const VoiceAssistantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isSpeaking, setIsSpeaking] = useState(false);
@@ -24,37 +28,20 @@ export const VoiceAssistantProvider: React.FC<{ children: React.ReactNode }> = (
         // Force unlock audio on mobile/strict browsers
         Howler.autoUnlock = true;
 
-        // Initialize Analyser once global context is ready
-        // We verify if context exists (it should with Howler default)
         const ctx = Howler.ctx;
         if (ctx) {
             const analyser = ctx.createAnalyser();
             analyser.fftSize = 64;
-
-            // Connect Howler's master gain to our analyser
-            // Howler.masterGain -> Analyser -> Destination (implicit if we don't disconnect master from destination)
-            // Actually Howler connects Main -> Destination. We just want to tap into it.
-            // Howler masterGain is internal but we can assume it's exposed or we connect to destination?
-            // "Howler.masterGain" is the gain node. 
-            // Correct flow: Howler.masterGain.connect(analyser); 
-            // Note: We don't need to connect analyser to destination unless we want to pass through (which we don't, it's a tap).
-
             Howler.masterGain.connect(analyser);
             analyserRef.current = analyser;
         }
-
-        return () => {
-            // Cleanup if needed
-        };
     }, []);
 
     const playAudioFile = useCallback(async (path: string) => {
-        // Stop currently playing sound if any
         if (currentHowlRef.current) {
             currentHowlRef.current.stop();
         }
 
-        // Setup Analyser if it wasn't ready (sometimes ctx initializes late)
         if (!analyserRef.current && Howler.ctx) {
             const analyser = Howler.ctx.createAnalyser();
             analyser.fftSize = 64;
@@ -64,16 +51,10 @@ export const VoiceAssistantProvider: React.FC<{ children: React.ReactNode }> = (
 
         const sound = new Howl({
             src: [path],
-            html5: false, // Must be false for Web Audio API (analyser) to work
-            onplay: () => {
-                setIsSpeaking(true);
-            },
-            onend: () => {
-                setIsSpeaking(false);
-            },
-            onstop: () => {
-                setIsSpeaking(false);
-            },
+            html5: false,
+            onplay: () => setIsSpeaking(true),
+            onend: () => setIsSpeaking(false),
+            onstop: () => setIsSpeaking(false),
             onloaderror: (_id, error) => {
                 console.error(`Error loading audio ${path}:`, error);
                 setIsSpeaking(false);
@@ -95,26 +76,45 @@ export const VoiceAssistantProvider: React.FC<{ children: React.ReactNode }> = (
     const playCameraActivated = useCallback(() => playAudioFile('/src/assets/audio/camera_activated.mp3'), [playAudioFile]);
     const playCameraDeactivated = useCallback(() => playAudioFile('/src/assets/audio/camera_deactivated.mp3'), [playAudioFile]);
 
+    // Stable actions object
+    const actions = React.useMemo(() => ({
+        playGreeting,
+        playArmed,
+        playHomeReturn,
+        playTakeoff,
+        playCameraActivated,
+        playCameraDeactivated
+    }), [playGreeting, playArmed, playHomeReturn, playTakeoff, playCameraActivated, playCameraDeactivated]);
+
+    // State object (changes when isSpeaking changes)
+    const state = React.useMemo(() => ({
+        isSpeaking,
+        audioAnalyser: analyserRef.current
+    }), [isSpeaking]);
+
     return (
-        <VoiceAssistantContext.Provider value={{
-            isSpeaking,
-            playGreeting,
-            playArmed,
-            playHomeReturn,
-            playTakeoff,
-            playCameraActivated,
-            playCameraDeactivated,
-            audioAnalyser: analyserRef.current
-        }}>
-            {children}
-        </VoiceAssistantContext.Provider>
+        <VoiceAssistantActionsContext.Provider value={actions}>
+            <VoiceAssistantStateContext.Provider value={state}>
+                {children}
+            </VoiceAssistantStateContext.Provider>
+        </VoiceAssistantActionsContext.Provider>
     );
 };
 
 export const useVoiceAssistant = () => {
-    const context = useContext(VoiceAssistantContext);
-    if (context === undefined) {
+    const state = useContext(VoiceAssistantStateContext);
+    const actions = useContext(VoiceAssistantActionsContext);
+
+    if (state === undefined || actions === undefined) {
         throw new Error('useVoiceAssistant must be used within a VoiceAssistantProvider');
+    }
+    return { ...state, ...actions };
+};
+
+export const useVoiceActions = () => {
+    const context = useContext(VoiceAssistantActionsContext);
+    if (context === undefined) {
+        throw new Error('useVoiceActions must be used within a VoiceAssistantProvider');
     }
     return context;
 };

@@ -14,6 +14,7 @@ interface FlightState {
     flightMode: FlightMode;
     logs: LogEntry[];
     controlInput: ControlInput;
+    position: Position;
 
     // Actions
     setArmed: (armed: boolean) => void;
@@ -21,6 +22,14 @@ interface FlightState {
     addLog: (message: string, type?: LogEntry['type']) => void;
     clearLogs: () => void;
     setControlInput: (input: { pitch: number; roll: number; yaw: number; throttle: number }) => void;
+    updatePosition: (pos: Partial<Position>) => void;
+}
+
+export interface Position {
+    lat: number;
+    lon: number;
+    alt: number;
+    heading: number;
 }
 
 export interface ControlInput {
@@ -48,7 +57,7 @@ export const useFlightStore = create<FlightState>((set) => ({
             logs: [
                 ...state.logs,
                 {
-                    id: Date.now().toString(),
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
                     timestamp: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
                     message: `Vehicle ${status}`,
                     type: armed ? 'error' : 'info' // Red for armed (danger)
@@ -62,7 +71,7 @@ export const useFlightStore = create<FlightState>((set) => ({
         logs: [
             ...state.logs,
             {
-                id: Date.now().toString(),
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
                 timestamp: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
                 message: `Mode changed to ${mode}`,
                 type: 'info'
@@ -74,7 +83,7 @@ export const useFlightStore = create<FlightState>((set) => ({
         logs: [
             ...state.logs,
             {
-                id: Date.now().toString(),
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
                 timestamp: new Date().toLocaleTimeString('fr-FR', { hour12: false }),
                 message,
                 type
@@ -86,4 +95,9 @@ export const useFlightStore = create<FlightState>((set) => ({
 
     controlInput: { pitch: 0, roll: 0, yaw: 0, throttle: 0 },
     setControlInput: (input) => set({ controlInput: input }),
+
+    position: { lat: 48.8566, lon: 2.3522, alt: 100, heading: 0 }, // Default Paris
+    updatePosition: (pos) => set((state) => ({
+        position: { ...state.position, ...pos }
+    })),
 }));

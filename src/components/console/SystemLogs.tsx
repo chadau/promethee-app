@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import { Terminal } from 'lucide-react';
 
 export const SystemLogs: React.FC = () => {
-    const { logs } = useFlightStore();
+    const logs = useFlightStore((state) => state.logs);
     const bottomRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom

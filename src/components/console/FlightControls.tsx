@@ -1,12 +1,12 @@
 import React from 'react';
 import { useFlightStore } from '../../store/useFlightStore';
-import { useVoiceAssistant } from '../../context/VoiceAssistantContext';
+import { useVoiceActions } from '../../context/VoiceAssistantContext';
 import { Power, PlaneTakeoff, Home, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 
 export const FlightControls: React.FC = () => {
     const { isArmed, setArmed, setFlightMode } = useFlightStore();
-    const { playArmed, playHomeReturn, playTakeoff } = useVoiceAssistant();
+    const { playArmed, playHomeReturn, playTakeoff } = useVoiceActions();
 
     const handleToggleArm = () => {
         if (!isArmed) {

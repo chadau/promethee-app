@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { VideoOff, Power, RefreshCw, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
-import { useVoiceAssistant } from '../../context/VoiceAssistantContext';
+import { useVoiceActions } from '../../context/VoiceAssistantContext';
 
 interface VideoFeedWidgetProps {
     className?: string;
@@ -12,7 +12,7 @@ export const VideoFeedWidget: React.FC<VideoFeedWidgetProps> = ({ className }) =
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
-    const { playCameraActivated, playCameraDeactivated } = useVoiceAssistant();
+    const { playCameraActivated, playCameraDeactivated } = useVoiceActions();
 
     // Mock connection to WebRTC (via local file)
     const toggleStream = async () => {
