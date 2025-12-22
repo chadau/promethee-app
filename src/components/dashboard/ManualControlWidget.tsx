@@ -152,13 +152,31 @@ export const ManualControlWidget: React.FC = () => {
         const normX = dx / maxRadius;
         const normY = dy / maxRadius;
 
+        // Current state of sticks
+        let lx = prevLeftStickRef.current.x;
+        let ly = prevLeftStickRef.current.y;
+        let rx = prevRightStickRef.current.x;
+        let ry = prevRightStickRef.current.y;
+
         if (stick === 'left') {
             setLeftStick({ x: normX, y: normY });
             prevLeftStickRef.current = { x: normX, y: normY };
+            lx = normX;
+            ly = normY;
         } else {
             setRightStick({ x: normX, y: normY });
             prevRightStickRef.current = { x: normX, y: normY };
+            rx = normX;
+            ry = normY;
         }
+
+        // Update Store
+        setControlInput({
+            roll: lx,
+            pitch: -ly,
+            yaw: rx,
+            throttle: -ry
+        });
     };
 
     const handlePointerUp = (e: React.PointerEvent, stick: 'left' | 'right') => {
@@ -170,13 +188,30 @@ export const ManualControlWidget: React.FC = () => {
             activeStickRef.current = null;
 
             // Reset to center
+            let lx = prevLeftStickRef.current.x;
+            let ly = prevLeftStickRef.current.y;
+            let rx = prevRightStickRef.current.x;
+            let ry = prevRightStickRef.current.y;
+
             if (stick === 'left') {
                 setLeftStick({ x: 0, y: 0 });
                 prevLeftStickRef.current = { x: 0, y: 0 };
+                lx = 0;
+                ly = 0;
             } else {
                 setRightStick({ x: 0, y: 0 });
                 prevRightStickRef.current = { x: 0, y: 0 };
+                rx = 0;
+                ry = 0;
             }
+
+            // Update Store
+            setControlInput({
+                roll: lx,
+                pitch: -ly,
+                yaw: rx,
+                throttle: -ry
+            });
         }
     };
 
@@ -219,7 +254,6 @@ export const ManualControlWidget: React.FC = () => {
                     onPointerDown={(e) => !isArmed ? null : handlePointerDown(e, 'left')}
                     onPointerMove={(e) => !isArmed ? null : handlePointerMove(e, 'left')}
                     onPointerUp={(e) => !isArmed ? null : handlePointerUp(e, 'left')}
-                    onPointerLeave={(e) => !isArmed ? null : handlePointerUp(e, 'left')}
                 >
                     {/* Crosshair / Grid Background */}
                     <div className="absolute inset-0 opacity-10 pointer-events-none"
@@ -250,7 +284,6 @@ export const ManualControlWidget: React.FC = () => {
                     onPointerDown={(e) => !isArmed ? null : handlePointerDown(e, 'right')}
                     onPointerMove={(e) => !isArmed ? null : handlePointerMove(e, 'right')}
                     onPointerUp={(e) => !isArmed ? null : handlePointerUp(e, 'right')}
-                    onPointerLeave={(e) => !isArmed ? null : handlePointerUp(e, 'right')}
                 >
                     <div className="absolute inset-0 opacity-10 pointer-events-none"
                         style={{
