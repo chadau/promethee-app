@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Viewer, Entity, PointGraphics, CylinderGraphics } from 'resium';
 import type { CesiumComponentRef } from 'resium';
-import { Cartesian3, Color, Math as CesiumMath, Transforms, HeadingPitchRoll, Entity as CesiumEntity, CallbackProperty, JulianDate } from 'cesium';
+import { Cartesian3, Color, Math as CesiumMath, Transforms, HeadingPitchRoll, Matrix4, HeadingPitchRange, Entity as CesiumEntity, CallbackProperty, ScreenSpaceEventHandler, ScreenSpaceEventType } from 'cesium';
 import { useFlightStore } from '../store/useFlightStore';
 import { Navigation, Crosshair } from 'lucide-react';
 
@@ -9,68 +9,145 @@ export const Globe: React.FC = () => {
     const position = useFlightStore((state) => state.position);
     const [isFollowing, setIsFollowing] = useState(true);
     const viewerRef = useRef<CesiumComponentRef<any>>(null);
-    const entityRef = useRef<CesiumComponentRef<CesiumEntity>>(null);
 
-    // Convert degrees to Cartesian3
-    const dronePosition = Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
+    // Memoize Cesium Properties to avoid re-creating them on every render
+    const positionProperty = React.useMemo(() => new CallbackProperty(() => {
+        const { position } = useFlightStore.getState();
+        return Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
+    }, false), []);
 
-    // Initial camera setup or mode switch
-    // Initial camera setup or mode switch
+    const visualOrientationProperty = React.useMemo(() => new CallbackProperty(() => {
+        const { position } = useFlightStore.getState();
+        const dronePos = Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
+        return Transforms.headingPitchRollQuaternion(
+            dronePos,
+            new HeadingPitchRoll(
+                CesiumMath.toRadians(position.heading - 90 + 180),
+                CesiumMath.toRadians(90),
+                0
+            )
+        );
+    }, false), []);
+
+    // Camera Tracking Logic (Manual Control for Smoothness)
     useEffect(() => {
-        let intervalId: ReturnType<typeof setInterval>;
+        let animationFrameId: number;
+        let listenerCleanup: (() => void) | undefined;
+        let handler: ScreenSpaceEventHandler | undefined;
 
-        const attemptLock = () => {
-            if (viewerRef.current?.cesiumElement && entityRef.current?.cesiumElement) {
-                const viewer = viewerRef.current.cesiumElement;
-                if (isFollowing) {
-                    if (viewer.trackedEntity !== entityRef.current.cesiumElement) {
-                        viewer.trackedEntity = entityRef.current.cesiumElement;
-                    }
-                } else {
-                    viewer.trackedEntity = undefined;
-                }
-                return true; // Success (refs available)
+        const setupCameraListener = () => {
+            const viewer = viewerRef.current?.cesiumElement;
+            if (!viewer || !viewer.scene) {
+                // Viewer not ready yet, retry next frame
+                animationFrameId = requestAnimationFrame(setupCameraListener);
+                return;
             }
-            return false;
+
+            const scene = viewer.scene;
+            const canvas = viewer.canvas;
+
+            // Setup Input Handler to break lock
+            handler = new ScreenSpaceEventHandler(canvas);
+            const breakLock = () => {
+                if (isFollowing) {
+                    setIsFollowing(false);
+                    // Immediate unlock with state preservation
+                    const camera = viewer.camera;
+                    const pos = camera.positionWC.clone();
+                    const dir = camera.directionWC.clone();
+                    const up = camera.upWC.clone();
+
+                    camera.lookAtTransform(Matrix4.IDENTITY);
+
+                    // Restore position and orientation using setView
+                    camera.setView({
+                        destination: pos,
+                        orientation: {
+                            direction: dir,
+                            up: up
+                        }
+                    });
+                }
+            };
+
+            handler.setInputAction(breakLock, ScreenSpaceEventType.LEFT_DOWN);
+            handler.setInputAction(breakLock, ScreenSpaceEventType.RIGHT_DOWN);
+            handler.setInputAction(breakLock, ScreenSpaceEventType.WHEEL);
+            handler.setInputAction(breakLock, ScreenSpaceEventType.PINCH_START);
+
+            const updateCamera = () => {
+                if (!isFollowing) return;
+
+                const { position } = useFlightStore.getState();
+                const center = Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
+
+                // Create a transform matrix that places the camera relative to the drone's position and orientation
+                // Heading - 90 to align standard X axis.
+                const transform = Transforms.headingPitchRollToFixedFrame(
+                    center,
+                    new HeadingPitchRoll(
+                        CesiumMath.toRadians(position.heading),
+                        0,
+                        0
+                    )
+                );
+
+                // Lock camera to this frame
+                // Offset: 0 heading (aligned), -90 deg pitch (Top Down), 500m range
+                viewer.camera.lookAtTransform(
+                    transform,
+                    new HeadingPitchRange(0, -CesiumMath.PI_OVER_TWO, 500)
+                );
+            };
+
+            if (isFollowing) {
+                scene.postUpdate.addEventListener(updateCamera);
+            } else {
+                // When we enter this branch from a re-render where isFollowing became false
+                scene.postUpdate.removeEventListener(updateCamera);
+
+                if (!Matrix4.equals(viewer.camera.transform, Matrix4.IDENTITY)) {
+                    const camera = viewer.camera;
+                    const pos = camera.positionWC.clone();
+                    const dir = camera.directionWC.clone();
+                    const up = camera.upWC.clone();
+
+                    camera.lookAtTransform(Matrix4.IDENTITY);
+
+                    camera.setView({
+                        destination: pos,
+                        orientation: {
+                            direction: dir,
+                            up: up
+                        }
+                    });
+                }
+            }
+
+            // Assign cleanup function to the scoped variable
+            listenerCleanup = () => {
+                scene.postUpdate.removeEventListener(updateCamera);
+                if (handler) {
+                    handler.destroy();
+                    handler = undefined;
+                }
+                if (!isFollowing && viewer && viewer.camera) {
+                    viewer.camera.lookAtTransform(Matrix4.IDENTITY);
+                }
+            };
         };
 
-        // Try immediately
-        attemptLock();
-
-        if (isFollowing) {
-            intervalId = setInterval(() => {
-                if (attemptLock()) {
-                    if (viewerRef.current?.cesiumElement && entityRef.current?.cesiumElement) {
-                        clearInterval(intervalId);
-                    }
-                }
-            }, 100);
-        } else {
-            attemptLock();
-        }
+        setupCameraListener();
 
         return () => {
-            if (intervalId) clearInterval(intervalId);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            // Call the cleanup function if it was assigned (i.e. if setup completed)
+            if (listenerCleanup) listenerCleanup();
         };
     }, [isFollowing]);
 
-    // Manual interaction breaks the lock
-    const handleManualInteraction = () => {
-        if (isFollowing) {
-            setIsFollowing(false);
-            if (viewerRef.current?.cesiumElement) {
-                viewerRef.current.cesiumElement.trackedEntity = undefined;
-            }
-        }
-    };
-
     return (
-        <div
-            className="w-full h-full bg-black/40 relative overflow-hidden rounded-xl border border-white/5 shadow-inner group"
-            onMouseDownCapture={handleManualInteraction}
-            onWheelCapture={handleManualInteraction}
-            onTouchStartCapture={handleManualInteraction}
-        >
+        <div className="w-full h-full bg-black/40 relative overflow-hidden rounded-xl border border-white/5 shadow-inner group">
             <Viewer
                 ref={viewerRef}
                 full
@@ -88,36 +165,17 @@ export const Globe: React.FC = () => {
             >
                 {/* Tracked Target (Point) */}
                 <Entity
-                    ref={entityRef}
                     name="Prométhée Drone"
-                    position={new CallbackProperty(() => {
-                        const { position } = useFlightStore.getState();
-                        return Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
-                    }, false)}
+                    position={positionProperty}
                     description="Target Drone Unit"
-                    viewFrom={new Cartesian3(0.0, -0.1, 500.0)}
                 >
                     <PointGraphics pixelSize={15} color={Color.CYAN} outlineColor={Color.WHITE} outlineWidth={2} />
                 </Entity>
 
                 {/* Visual Heading Cone/Arrow */}
                 <Entity
-                    position={new CallbackProperty(() => {
-                        const { position } = useFlightStore.getState();
-                        return Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
-                    }, false)}
-                    orientation={new CallbackProperty(() => {
-                        const { position } = useFlightStore.getState();
-                        const dronePos = Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
-                        return Transforms.headingPitchRollQuaternion(
-                            dronePos,
-                            new HeadingPitchRoll(
-                                CesiumMath.toRadians(position.heading - 90 + 180),
-                                CesiumMath.toRadians(90),
-                                0
-                            )
-                        );
-                    }, false)}
+                    position={positionProperty}
+                    orientation={visualOrientationProperty}
                 >
                     <CylinderGraphics
                         length={50.0}
