@@ -15,6 +15,7 @@ interface FlightState {
     logs: LogEntry[];
     controlInput: ControlInput;
     position: Position;
+    telemetry: Telemetry;
 
     // Actions
     setArmed: (armed: boolean) => void;
@@ -23,6 +24,7 @@ interface FlightState {
     clearLogs: () => void;
     setControlInput: (input: { pitch: number; roll: number; yaw: number; throttle: number }) => void;
     updatePosition: (pos: Partial<Position>) => void;
+    updateTelemetry: (telem: Partial<Telemetry>) => void;
 }
 
 export interface Position {
@@ -37,6 +39,11 @@ export interface ControlInput {
     roll: number;
     yaw: number;
     throttle: number;
+}
+
+export interface Telemetry {
+    speed: number;
+    battery: number;
 }
 
 export const useFlightStore = create<FlightState>((set) => ({
@@ -99,5 +106,10 @@ export const useFlightStore = create<FlightState>((set) => ({
     position: { lat: 48.8566, lon: 2.3522, alt: 100, heading: 0 }, // Default Paris
     updatePosition: (pos) => set((state) => ({
         position: { ...state.position, ...pos }
+    })),
+
+    telemetry: { speed: 0, battery: 100 },
+    updateTelemetry: (telem) => set((state) => ({
+        telemetry: { ...state.telemetry, ...telem }
     })),
 }));

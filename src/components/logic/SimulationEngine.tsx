@@ -116,18 +116,44 @@ export const SimulationEngine: React.FC = () => {
                         alt: newAlt,
                         heading: newHeading
                     });
+                }
 
-                    // Update ref immediately to prevent stutter in next frame if store hasn't updated yet?
-                    // No, store update is usually fast enough, strictly React might batch.
-                    // Updating ref manually is risky if we deviate from store truth.
-                    // But for smooth physics, we might want to keep local state accumulator?
-                    // For now, let's rely on store info. 
-                    // Actually, if we rely on store which updates async, we might get lag.
-                    // Better to keep local position accumulator and sync only occasionally? 
-                    // Or just assume 60FPS store updates are fine (Zustand is fast, transient updates are better).
-                    // For a "Sim", updating store 60 times a second might trigger 60 re-renders of components subscribed.
-                    // We optimized Globe and others to only listen to position.
-                    // It should be fine.
+                // Calculate Ground Speed (approximate based on input magnitude)
+                // Pitch/Roll are 0-1. Max Speed is SPEED (50m/s).
+                const inputMagnitude = Math.min(1.0, Math.sqrt(pitch * pitch + roll * roll));
+                const groundSpeedMps = inputMagnitude * SPEED;
+                const groundSpeedKmh = groundSpeedMps * 3.6;
+
+                // Battery Logic
+                // Base drain (avionics/computer): 0.05% per second
+                // Motor drain: up to 0.5% per second at full throttle
+                // Total max drain ~ 0.55% per sec -> ~3 mins flight time (simulation speed)
+                // Real drone ~20 mins -> ~0.08% per sec average. 
+                // Let's make it visible but realistic-ish: 12-15 mins flight.
+                // Avionics: 0.01% per sec
+                // Motors: 0.1% per sec at max
+
+                const motorLoad = (Math.abs(throttle) + Math.abs(pitch) + Math.abs(roll) + Math.abs(yaw)) / 4;
+                const batteryDrain = (0.01 + (motorLoad * 0.1)) * dt;
+
+                const currentTelemetry = useFlightStore.getState().telemetry;
+                let newBattery = currentTelemetry.battery - batteryDrain;
+                if (newBattery < 0) newBattery = 0;
+
+                // Update Telemetry (throttle update to avoid too many renders? maybe every 100ms? 
+                // but we optimized selectors so it should be fine)
+                // Only update if changed significantly
+                const currentSpeed = currentTelemetry.speed;
+
+                // Update if speed changed OR battery drop > 0.1 (visual update)
+                // Actually battery needs to update frequently for decimal precision or just round it for UI
+                // Storing imprecise float in store is fine.
+
+                if (Math.abs(groundSpeedKmh - currentSpeed) > 0.1 || Math.abs(newBattery - currentTelemetry.battery) > 0.01) {
+                    useFlightStore.getState().updateTelemetry({
+                        speed: Math.round(groundSpeedKmh),
+                        battery: newBattery
+                    });
                 }
             }
 
