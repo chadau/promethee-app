@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Viewer, Entity, PointGraphics, CylinderGraphics } from 'resium';
+import { Viewer, Entity, PointGraphics, ModelGraphics } from 'resium';
 import type { CesiumComponentRef } from 'resium';
 import { Cartesian3, Color, Math as CesiumMath, Transforms, HeadingPitchRoll, Matrix4, HeadingPitchRange, Entity as CesiumEntity, CallbackProperty, ScreenSpaceEventHandler, ScreenSpaceEventType } from 'cesium';
 import { useFlightStore } from '../store/useFlightStore';
@@ -22,12 +22,12 @@ export const Globe: React.FC = () => {
         return Transforms.headingPitchRollQuaternion(
             dronePos,
             new HeadingPitchRoll(
-                CesiumMath.toRadians(position.heading - 90 + 180),
-                CesiumMath.toRadians(90),
+                CesiumMath.toRadians(position.heading - 90),
+                0,
                 0
             )
         );
-    }, false), []);
+    }, false), []); // Re-render when this memo changes is irrelevant due to CallbackProperty, but safer to keep deps empty or minimal
 
     // Camera Tracking Logic (Manual Control for Smoothness)
     useEffect(() => {
@@ -82,7 +82,7 @@ export const Globe: React.FC = () => {
                 const center = Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
 
                 // Create a transform matrix that places the camera relative to the drone's position and orientation
-                // Heading - 90 to align standard X axis.
+                // Heading 0 to align with physics (North = Top)
                 const transform = Transforms.headingPitchRollToFixedFrame(
                     center,
                     new HeadingPitchRoll(
@@ -153,6 +153,7 @@ export const Globe: React.FC = () => {
                 full
                 timeline={false}
                 animation={false}
+                shouldAnimate={true}
                 infoBox={false}
                 navigationHelpButton={false}
                 homeButton={false}
@@ -172,16 +173,17 @@ export const Globe: React.FC = () => {
                     <PointGraphics pixelSize={15} color={Color.CYAN} outlineColor={Color.WHITE} outlineWidth={2} />
                 </Entity>
 
-                {/* Visual Heading Cone/Arrow */}
+                {/* Visual 3D Drone Model */}
                 <Entity
                     position={positionProperty}
                     orientation={visualOrientationProperty}
                 >
-                    <CylinderGraphics
-                        length={50.0}
-                        topRadius={0.0}
-                        bottomRadius={20.0}
-                        material={Color.CYAN.withAlpha(0.7)}
+                    <ModelGraphics
+                        uri="/CesiumDrone.glb"
+                        minimumPixelSize={128}
+                        maximumScale={20000}
+                        scale={1.0}
+                        runAnimations={true}
                     />
                 </Entity>
             </Viewer>
