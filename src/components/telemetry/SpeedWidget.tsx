@@ -7,14 +7,18 @@ export const SpeedWidget: React.FC = () => {
     // Optimized selector: only re-render when speed changes
     const speed = useFlightStore(state => state.telemetry.speed);
 
+    // Calculate speed in km/h (speed comes in m/s)
+    const speedKmh = speed * 3.6;
+    const formattedSpeed = speedKmh.toFixed(1);
+
     // Calculate percentage for progress bar (assuming max speed 100 km/h for visualization)
     const maxSpeed = 100;
-    const percentage = Math.min(100, (speed / maxSpeed) * 100);
+    const percentage = Math.min(100, (speedKmh / maxSpeed) * 100);
 
     return (
         <TelemetryCard
             title="Ground Speed"
-            value={speed.toString()}
+            value={formattedSpeed}
             unit="km/h"
             icon={Gauge}
             className="h-full bg-[#0E1419]/90 backdrop-blur-md border-white/5 shadow-[0_4px_20px_rgba(0,0,0,0.35)]"

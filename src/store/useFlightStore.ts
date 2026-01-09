@@ -58,6 +58,9 @@ export const useFlightStore = create<FlightState>((set) => ({
     ],
 
     setArmed: (armed) => set((state) => {
+        // Prevent duplicate logs if state hasn't changed
+        if (state.isArmed === armed) return state;
+
         const status = armed ? 'ARMED' : 'DISARMED';
         return {
             isArmed: armed,

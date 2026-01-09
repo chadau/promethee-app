@@ -13,7 +13,7 @@ import { AltitudeWidget } from '../telemetry/AltitudeWidget';
 import { SpeedWidget } from '../telemetry/SpeedWidget';
 import { BatteryWidget } from '../telemetry/BatteryWidget';
 import { ManualControlWidget } from './ManualControlWidget';
-import { SimulationEngine } from '../logic/SimulationEngine';
+// import { SimulationEngine } from '../logic/SimulationEngine';
 import { Navigation, Gauge, Zap } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
@@ -40,7 +40,7 @@ export const Dashboard: React.FC = () => {
 
     return (
         <div className="grid-stack w-full h-full">
-            <SimulationEngine />
+            {/* <SimulationEngine /> */}
 
             {/* Map Area: 9x6 (Reduced Height) */}
             <GridWidget id="map" x={0} y={0} w={5} h={13} minH={4} minW={5} className="z-0">

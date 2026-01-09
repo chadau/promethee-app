@@ -3,6 +3,7 @@ import { useFlightStore } from '../../store/useFlightStore';
 import { useVoiceActions } from '../../context/VoiceAssistantContext';
 import { Power, PlaneTakeoff, Home, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
+import { droneConnectionService } from '../../services/droneConnectionService';
 
 export const FlightControls: React.FC = () => {
     const isArmed = useFlightStore(state => state.isArmed);
@@ -11,9 +12,13 @@ export const FlightControls: React.FC = () => {
     const { playArmed, playHomeReturn, playTakeoff } = useVoiceActions();
 
     const handleToggleArm = () => {
+        const action = isArmed ? 'DISARM' : 'ARM';
+        droneConnectionService.sendDroneCommand(1, action);
+
         if (!isArmed) {
             playArmed();
         }
+        // Optimistic update - in real scenario we might wait for telemetry
         setArmed(!isArmed);
     };
 
@@ -43,6 +48,7 @@ export const FlightControls: React.FC = () => {
                         icon={PlaneTakeoff}
                         onClick={() => {
                             if (isArmed) {
+                                droneConnectionService.sendDroneCommand(1, 'TAKEOFF');
                                 setFlightMode('AUTO');
                                 playTakeoff();
                             }
@@ -54,6 +60,7 @@ export const FlightControls: React.FC = () => {
                         icon={Home}
                         color="amber"
                         onClick={() => {
+                            // RTH is not supported by backend command service yet
                             setFlightMode('RTH');
                             playHomeReturn();
                         }}
@@ -63,7 +70,11 @@ export const FlightControls: React.FC = () => {
 
             {/* Bottom Row: Emergency */}
             <button
-                onClick={() => { setArmed(false); setFlightMode('LAND'); }}
+                onClick={() => {
+                    droneConnectionService.sendDroneCommand(1, 'LAND');
+                    setArmed(false);
+                    setFlightMode('LAND');
+                }}
                 className="h-10 bg-alert-red hover:bg-red-600 text-white rounded-lg flex items-center justify-center gap-2 transition-colors border border-red-400 shadow-[0_0_10px_rgba(255,94,94,0.4)]"
             >
                 <AlertTriangle size={16} />

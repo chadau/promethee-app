@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Viewer, Entity, PointGraphics, ModelGraphics } from 'resium';
 import type { CesiumComponentRef } from 'resium';
-import { Cartesian3, Color, Math as CesiumMath, Transforms, HeadingPitchRoll, Matrix4, HeadingPitchRange, Entity as CesiumEntity, CallbackProperty, ScreenSpaceEventHandler, ScreenSpaceEventType } from 'cesium';
+import { Cartesian3, Color, Math as CesiumMath, Transforms, HeadingPitchRoll, Matrix4, HeadingPitchRange, CallbackProperty, CallbackPositionProperty, ScreenSpaceEventHandler, ScreenSpaceEventType } from 'cesium';
 import { useFlightStore } from '../store/useFlightStore';
 import { Navigation, Crosshair } from 'lucide-react';
 
@@ -10,24 +10,65 @@ export const Globe: React.FC = () => {
     const [isFollowing, setIsFollowing] = useState(true);
     const viewerRef = useRef<CesiumComponentRef<any>>(null);
 
-    // Memoize Cesium Properties to avoid re-creating them on every render
-    const positionProperty = React.useMemo(() => new CallbackProperty(() => {
-        const { position } = useFlightStore.getState();
-        return Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
+    const positionRef = useRef(position);
+
+    // Sync ref with position state to avoid direct store access in callbacks
+    useEffect(() => {
+        positionRef.current = position;
+    }, [position]);
+
+    // Refs for smoothing state
+    const smoothPosRef = useRef<{ lat: number; lon: number; alt: number; lastUpdate: number }>({
+        lat: position.lat, lon: position.lon, alt: position.alt, lastUpdate: Date.now()
+    });
+    const smoothHeadingRef = useRef(position.heading);
+
+    // Smooth Factor (Lower = smoother but more latency, Higher = more responsive)
+    const SMOOTH_FACTOR = 0.1; // Approx 10% of the distance per frame (at 60fps this is fast enough)
+
+    // Memoize Cesium Properties
+    const positionProperty = React.useMemo(() => new CallbackPositionProperty(() => {
+        const target = positionRef.current;
+        const current = smoothPosRef.current;
+
+        // Simple Lerp
+        current.lat += (target.lat - current.lat) * SMOOTH_FACTOR;
+        current.lon += (target.lon - current.lon) * SMOOTH_FACTOR;
+        current.alt += (target.alt - current.alt) * SMOOTH_FACTOR;
+
+        return Cartesian3.fromDegrees(current.lon, current.lat, current.alt);
     }, false), []);
 
     const visualOrientationProperty = React.useMemo(() => new CallbackProperty(() => {
-        const { position } = useFlightStore.getState();
-        const dronePos = Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
+        const targetHeading = positionRef.current.heading;
+        let currentHeading = smoothHeadingRef.current;
+
+        // Heading Wrap-around Logic (0 <-> 360)
+        let diff = targetHeading - currentHeading;
+        if (diff > 180) diff -= 360;
+        if (diff < -180) diff += 360;
+
+        // Apply smoothing to the shortest path difference
+        currentHeading += diff * SMOOTH_FACTOR;
+
+        // Normalize back to 0-360 for storage
+        if (currentHeading >= 360) currentHeading -= 360;
+        if (currentHeading < 0) currentHeading += 360;
+
+        smoothHeadingRef.current = currentHeading;
+
+        const currentPos = smoothPosRef.current;
+        const dronePos = Cartesian3.fromDegrees(currentPos.lon, currentPos.lat, currentPos.alt);
+
         return Transforms.headingPitchRollQuaternion(
             dronePos,
             new HeadingPitchRoll(
-                CesiumMath.toRadians(position.heading - 90),
+                CesiumMath.toRadians(currentHeading - 90),
                 0,
                 0
             )
         );
-    }, false), []); // Re-render when this memo changes is irrelevant due to CallbackProperty, but safer to keep deps empty or minimal
+    }, false), []);
 
     // Camera Tracking Logic (Manual Control for Smoothness)
     useEffect(() => {
@@ -78,15 +119,17 @@ export const Globe: React.FC = () => {
             const updateCamera = () => {
                 if (!isFollowing) return;
 
-                const { position } = useFlightStore.getState();
-                const center = Cartesian3.fromDegrees(position.lon, position.lat, position.alt);
+                // Use the SMOOTHED position for the camera too, otherwise the camera jitters relative to the model
+                const pos = smoothPosRef.current;
+                const heading = smoothHeadingRef.current;
+
+                const center = Cartesian3.fromDegrees(pos.lon, pos.lat, pos.alt);
 
                 // Create a transform matrix that places the camera relative to the drone's position and orientation
-                // Heading 0 to align with physics (North = Top)
                 const transform = Transforms.headingPitchRollToFixedFrame(
                     center,
                     new HeadingPitchRoll(
-                        CesiumMath.toRadians(position.heading),
+                        CesiumMath.toRadians(heading),
                         0,
                         0
                     )

@@ -5,6 +5,8 @@ import { LoginPage } from './components/auth/LoginPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { VoiceAssistantProvider, useVoiceAssistant } from './context/VoiceAssistantContext';
 import { useEffect, useRef } from 'react';
+import { useAuthStore } from './store/authStore';
+import { droneConnectionService } from './services/droneConnectionService';
 
 const GreetingTrigger = () => {
   const { playGreeting } = useVoiceAssistant();
@@ -19,6 +21,24 @@ const GreetingTrigger = () => {
   return null;
 };
 
+const ConnectionManager = () => {
+  const { isAuthenticated, token } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      droneConnectionService.connect(token);
+    } else {
+      droneConnectionService.disconnect();
+    }
+
+    return () => {
+      droneConnectionService.disconnect();
+    };
+  }, [isAuthenticated, token]);
+
+  return null;
+};
+
 function App() {
   return (
     <Routes>
@@ -28,6 +48,7 @@ function App() {
         element={
           <ProtectedRoute>
             <VoiceAssistantProvider>
+              <ConnectionManager />
               <GreetingTrigger />
               <MainLayout>
                 <div className="w-full h-full p-4">
