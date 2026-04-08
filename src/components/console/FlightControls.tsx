@@ -18,8 +18,6 @@ export const FlightControls: React.FC = () => {
         if (!isArmed) {
             playArmed();
         }
-        // Optimistic update - in real scenario we might wait for telemetry
-        setArmed(!isArmed);
     };
 
     return (

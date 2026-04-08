@@ -103,7 +103,7 @@ export const useFlightStore = create<FlightState>((set) => ({
 
     clearLogs: () => set({ logs: [] }),
 
-    controlInput: { pitch: 0, roll: 0, yaw: 0, throttle: 0 },
+    controlInput: { pitch: 0, roll: 0, yaw: 0, throttle: 0.5 },
     setControlInput: (input) => set({ controlInput: input }),
 
     position: { lat: 48.8566, lon: 2.3522, alt: 100, heading: 0 }, // Default Paris

@@ -75,7 +75,7 @@ export const ManualControlWidget: React.FC = () => {
                 roll: paramLeftX,
                 pitch: -paramLeftY, // Invert Y for standard pitch up/down logic usually
                 yaw: paramRightX,
-                throttle: -paramRightY // Invert Y so up is positive
+                throttle: (-paramRightY + 1) / 2 // Map -1..1 to 0..1 (Center 0.5)
             };
 
             // Check if input changed significantly to avoid store thrashing
@@ -175,7 +175,7 @@ export const ManualControlWidget: React.FC = () => {
             roll: lx,
             pitch: -ly,
             yaw: rx,
-            throttle: -ry
+            throttle: (-ry + 1) / 2 // Map -1..1 to 0..1
         });
     };
 
@@ -210,7 +210,7 @@ export const ManualControlWidget: React.FC = () => {
                 roll: lx,
                 pitch: -ly,
                 yaw: rx,
-                throttle: -ry
+                throttle: (-ry + 1) / 2
             });
         }
     };

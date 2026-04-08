@@ -158,6 +158,11 @@ class DroneConnectionService {
         if (this.pc) this.pc.close();
         if (this.ws) this.ws.close();
 
+        if (this.controlLoopInterval) {
+            clearInterval(this.controlLoopInterval);
+            this.controlLoopInterval = null;
+        }
+
         this.controlChannel = null;
         this.telemetryChannel = null;
         this.pc = null;
@@ -218,7 +223,15 @@ class DroneConnectionService {
 
     private setupControlChannel() {
         if (!this.controlChannel) return;
-        this.controlChannel.onopen = () => console.log('Control Channel OPEN');
+        this.controlChannel.onopen = () => {
+            console.log('Control Channel OPEN');
+
+            // Start control loop
+            if (this.controlLoopInterval) clearInterval(this.controlLoopInterval);
+            this.controlLoopInterval = setInterval(() => {
+                this.sendManualControl();
+            }, 1000 / this.CONTROL_FREQUENCY_HZ);
+        };
     }
 
     private updateStore(data: TelemetryData) {
@@ -265,6 +278,7 @@ class DroneConnectionService {
         });
 
         useFlightStore.getState().setArmed(data.armed);
+        this.lastTelemetry.armed = data.armed;
         // Map backend mode string to frontend FlightMode type if needed
         // useFlightStore.getState().setFlightMode(data.mode as FlightMode); 
     }
@@ -277,6 +291,36 @@ class DroneConnectionService {
         }
         this.disconnectLogic();
     }
+
+    private controlLoopInterval: ReturnType<typeof setTimeout> | null = null;
+    private readonly CONTROL_FREQUENCY_HZ = 30;
+
+    public sendManualControl() {
+        // Requirement: Only send if ARMED and IN FLIGHT (after takeoff)
+        // We use altitude > 1m as a proxy for "after takeoff"
+        const isArmed = this.lastTelemetry.armed ?? false;
+
+        if (isArmed) {
+            if (this.controlChannel && this.controlChannel.readyState === 'open') {
+                const input = useFlightStore.getState().controlInput;
+                const format = (val: number) => Number(val.toFixed(1));
+
+                const payload = {
+                    pitch: format(input.pitch),
+                    roll: format(input.roll),
+                    yaw: format(input.yaw),
+                    throttle: format(input.throttle)
+                };
+
+                this.controlChannel.send(JSON.stringify(payload));
+            }
+        }
+    }
+
+    constructor() {
+        // No subscription needed, we poll in the control loop
+    }
 }
+
 
 export const droneConnectionService = new DroneConnectionService();

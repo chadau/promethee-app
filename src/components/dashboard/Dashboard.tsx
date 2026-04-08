@@ -14,7 +14,6 @@ import { SpeedWidget } from '../telemetry/SpeedWidget';
 import { BatteryWidget } from '../telemetry/BatteryWidget';
 import { ManualControlWidget } from './ManualControlWidget';
 // import { SimulationEngine } from '../logic/SimulationEngine';
-import { Navigation, Gauge, Zap } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
     // Mount simulation engine (headless)
