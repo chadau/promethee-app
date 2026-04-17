@@ -9,14 +9,13 @@ export interface User {
 
 export interface AuthResponse {
     user: User;
-    token: string;
+    accessToken: string;
+    refreshToken: string;
 }
-
-
 
 export const authService = {
     login: async (username: string, password: string): Promise<AuthResponse> => {
-        const response = await fetch('http://localhost:8080/login', {
+        const response = await fetch('http://localhost:8080/api/v1/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -35,7 +34,8 @@ export const authService = {
                 username: username,
                 role: 'operator',
             },
-            token: data.token,
+            accessToken: data.access_token,
+            refreshToken: data.refresh_token,
         };
     },
 
@@ -46,5 +46,25 @@ export const authService = {
                 resolve();
             }, 200);
         });
+    },
+
+    refreshToken: async (token: string): Promise<{ accessToken: string, refreshToken: string }> => {
+        const response = await fetch('http://localhost:8080/api/v1/auth/refresh', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ refresh_token: token }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Refresh failed');
+        }
+
+        const data = await response.json();
+        return {
+            accessToken: data.access_token,
+            refreshToken: data.refresh_token,
+        };
     }
 };

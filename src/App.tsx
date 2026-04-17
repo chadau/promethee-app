@@ -1,12 +1,14 @@
 import { Routes, Route } from 'react-router-dom';
 import { MainLayout } from './layouts/MainLayout';
-import { Dashboard } from './components/dashboard/Dashboard';
+import { DashboardCanvas } from './components/dashboard/DashboardCanvas';
 import { LoginPage } from './components/auth/LoginPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { VoiceAssistantProvider, useVoiceAssistant } from './context/VoiceAssistantContext';
 import { useEffect, useRef } from 'react';
 import { useAuthStore } from './store/authStore';
 import { droneConnectionService } from './services/droneConnectionService';
+import { AdminProfilesPage } from './pages/AdminProfilesPage';
+import { AdminDashboardsPage } from './pages/AdminDashboardsPage';
 
 const GreetingTrigger = () => {
   const { playGreeting } = useVoiceAssistant();
@@ -22,11 +24,11 @@ const GreetingTrigger = () => {
 };
 
 const ConnectionManager = () => {
-  const { isAuthenticated, token } = useAuthStore();
+  const { isAuthenticated, accessToken } = useAuthStore();
 
   useEffect(() => {
-    if (isAuthenticated && token) {
-      droneConnectionService.connect(token);
+    if (isAuthenticated && accessToken) {
+      droneConnectionService.connect(accessToken);
     } else {
       droneConnectionService.disconnect();
     }
@@ -34,7 +36,7 @@ const ConnectionManager = () => {
     return () => {
       droneConnectionService.disconnect();
     };
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated, accessToken]);
 
   return null;
 };
@@ -52,8 +54,32 @@ function App() {
               <GreetingTrigger />
               <MainLayout>
                 <div className="w-full h-full p-4">
-                  <Dashboard />
+                  <DashboardCanvas />
                 </div>
+              </MainLayout>
+            </VoiceAssistantProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/dashboards"
+        element={
+          <ProtectedRoute>
+            <VoiceAssistantProvider>
+              <MainLayout>
+                <AdminDashboardsPage />
+              </MainLayout>
+            </VoiceAssistantProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/profiles"
+        element={
+          <ProtectedRoute>
+            <VoiceAssistantProvider>
+              <MainLayout>
+                <AdminProfilesPage />
               </MainLayout>
             </VoiceAssistantProvider>
           </ProtectedRoute>
@@ -64,4 +90,3 @@ function App() {
 }
 
 export default App;
-

@@ -5,7 +5,8 @@ import { authService, type User } from '../services/authService';
 
 interface AuthState {
     user: User | null;
-    token: string | null;
+    accessToken: string | null;
+    refreshToken: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;
@@ -13,13 +14,15 @@ interface AuthState {
     login: (username: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     clearError: () => void;
+    setTokens: (accessToken: string, refreshToken: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
             user: null,
-            token: null,
+            accessToken: null,
+            refreshToken: null,
             isAuthenticated: false,
             isLoading: false,
             error: null,
@@ -30,7 +33,8 @@ export const useAuthStore = create<AuthState>()(
                     const response = await authService.login(username, password);
                     set({
                         user: response.user,
-                        token: response.token,
+                        accessToken: response.accessToken,
+                        refreshToken: response.refreshToken,
                         isAuthenticated: true,
                         isLoading: false
                     });
@@ -50,7 +54,8 @@ export const useAuthStore = create<AuthState>()(
                     await authService.logout();
                     set({
                         user: null,
-                        token: null,
+                        accessToken: null,
+                        refreshToken: null,
                         isAuthenticated: false,
                         isLoading: false,
                         error: null
@@ -59,7 +64,8 @@ export const useAuthStore = create<AuthState>()(
                     console.error(err);
                     set({
                         user: null,
-                        token: null,
+                        accessToken: null,
+                        refreshToken: null,
                         isAuthenticated: false,
                         isLoading: false,
                         error: null
@@ -68,12 +74,15 @@ export const useAuthStore = create<AuthState>()(
             },
 
             clearError: () => set({ error: null }),
+
+            setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
         }),
         {
             name: 'auth-storage', // name of the item in the storage (must be unique)
             partialize: (state) => ({
                 user: state.user,
-                token: state.token,
+                accessToken: state.accessToken,
+                refreshToken: state.refreshToken,
                 isAuthenticated: state.isAuthenticated
             }),
         }

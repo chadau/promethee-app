@@ -30,7 +30,7 @@ export const SimulationEngine: React.FC = () => {
         stateRef.current.position = position;
     }, [isArmed, controlInput, position]);
 
-    const requestRef = useRef<number>();
+    const requestRef = useRef<number>(0);
     const updatePosition = useFlightStore(state => state.updatePosition);
 
     useEffect(() => {

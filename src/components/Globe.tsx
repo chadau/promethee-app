@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Viewer, Entity, PointGraphics, ModelGraphics } from 'resium';
 import type { CesiumComponentRef } from 'resium';
-import { Cartesian3, Color, Math as CesiumMath, Transforms, HeadingPitchRoll, Matrix4, HeadingPitchRange, CallbackProperty, CallbackPositionProperty, ScreenSpaceEventHandler, ScreenSpaceEventType } from 'cesium';
+import { Cartesian3, Color, Math as CesiumMath, Transforms, HeadingPitchRoll, Matrix4, HeadingPitchRange, CallbackProperty, CallbackPositionProperty, ScreenSpaceEventHandler, ScreenSpaceEventType, Ion } from 'cesium';
 import { useFlightStore } from '../store/useFlightStore';
 import { Navigation, Crosshair } from 'lucide-react';
+
+Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2OWE1MWVjYi1hZDY2LTQ5MDQtYjI4NC1hMmNlZTUwYzBkY2UiLCJpZCI6MzcxOTA0LCJpYXQiOjE3NzU2NTM2Mzh9.NdpBuE15dBLLGlE_WDqRCA4oRmmwPEg2QBuWw2AE-ao";
 
 export const Globe: React.FC = () => {
     const position = useFlightStore((state) => state.position);

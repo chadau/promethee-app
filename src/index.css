@@ -13,3 +13,64 @@ body {
   padding: 0;
   overflow: hidden;
 }
+
+/* ── Drawer slide-in animation ─────────────── */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 200ms ease-out;
+}
+
+/* ── Custom scrollbar (dark theme) ─────────── */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── GridStack overrides for charter theme ──── */
+.grid-stack > .grid-stack-item > .grid-stack-item-content {
+  background: transparent;
+  border: none;
+  overflow: visible;
+}
+
+.grid-stack > .grid-stack-item > .ui-resizable-handle {
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.grid-stack > .grid-stack-item:hover > .ui-resizable-handle {
+  opacity: 0.5;
+}
+
+.grid-stack-item-removing {
+  opacity: 0.5;
+}
+
+.grid-stack .grid-stack-placeholder > .placeholder-content {
+  border: 2px dashed rgba(0, 191, 255, 0.3) !important;
+  border-radius: 12px;
+  background: rgba(0, 191, 255, 0.03) !important;
+  box-shadow: 0 0 15px rgba(0, 191, 255, 0.08);
+}
