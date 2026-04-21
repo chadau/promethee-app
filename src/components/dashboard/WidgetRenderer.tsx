@@ -26,6 +26,7 @@ import { ManualControlWidget } from './ManualControlWidget';
 import { SystemLogs } from '../console/SystemLogs';
 import { FlightInstruments } from '../console/FlightInstruments';
 import { FlightControls } from '../console/FlightControls';
+import { MavlinkCliWidget } from '../cli/MavlinkCliWidget';
 
 // ── Widget component map ─────────────────────
 const WIDGET_COMPONENTS: Record<string, React.ComponentType> = {
@@ -38,6 +39,7 @@ const WIDGET_COMPONENTS: Record<string, React.ComponentType> = {
     'system-logs': SystemLogs,
     'flight-instruments': FlightInstruments,
     'flight-controls': FlightControls,
+    'mavlink-cli': MavlinkCliWidget,
 };
 
 // ── Loading skeleton ─────────────────────────

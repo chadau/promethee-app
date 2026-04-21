@@ -1,5 +1,6 @@
 
 import { useFlightStore } from '../store/useFlightStore';
+import { useShellStore } from '../store/useShellStore';
 
 interface TelemetryData {
     lat: number;
@@ -115,6 +116,10 @@ class DroneConnectionService {
                 if (msg.type === 'ANSWER') {
                     console.log('Received ANSWER');
                     await this.handleAnswer(msg.sdp);
+                } else if (msg.type === 'shell_output' && msg.droneId != null) {
+                    useShellStore.getState().appendOutput(String(msg.droneId), msg.data ?? '');
+                } else if (msg.type === 'shell_error' && msg.droneId != null) {
+                    useShellStore.getState().appendError(String(msg.droneId), msg.data ?? '');
                 }
             } catch (e) {
                 console.error('Signaling message error:', e);
@@ -184,6 +189,16 @@ class DroneConnectionService {
             action: action
         };
         console.log(`Sending Drone Command: ${action}`);
+        this.send(payload);
+    }
+
+    public sendShellCommand(droneId: string, command: string) {
+        const payload = {
+            type: 'shell_command',
+            droneId,
+            command: command + '\n',
+        };
+        console.log(`[Shell] Sending to drone ${droneId}: ${command}`);
         this.send(payload);
     }
 

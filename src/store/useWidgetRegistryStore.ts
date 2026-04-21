@@ -106,6 +106,17 @@ const ALL_WIDGETS: WidgetDefinition[] = [
         minW: 2,
         minH: 2,
     },
+    {
+        id: 'mavlink-cli',
+        name: 'Console MAVLink',
+        description: 'Terminal MAVLink Shell pour commandes PX4 en temps réel.',
+        category: 'system',
+        icon: 'TerminalSquare',
+        defaultW: 4,
+        defaultH: 6,
+        minW: 3,
+        minH: 3,
+    },
 ];
 
 // ── Store ────────────────────────────────────
