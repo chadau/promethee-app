@@ -20,6 +20,7 @@ export function useDashboardActions() {
         deleteDashboard,
         resetToDefault,
         setActiveDashboard,
+        saveActiveDashboard,
     } = useDashboardLayoutStore();
 
     const { setEditMode, closeWidgetPicker } = useUiEditorStore();
@@ -64,10 +65,15 @@ export function useDashboardActions() {
     );
 
     /** Save and exit edit mode. */
-    const saveAndExit = useCallback(() => {
+    const saveAndExit = useCallback(async () => {
+        try {
+            await saveActiveDashboard();
+        } catch (error) {
+            console.error('Failed to save dashboard:', error);
+        }
         setEditMode(false);
         closeWidgetPicker();
-    }, [setEditMode, closeWidgetPicker]);
+    }, [saveActiveDashboard, setEditMode, closeWidgetPicker]);
 
     return {
         activeDashboard,

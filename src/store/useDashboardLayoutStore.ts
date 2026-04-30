@@ -22,6 +22,7 @@ interface DashboardLayoutState {
     duplicateDashboard: (id: string) => Promise<DashboardLayout>;
     deleteDashboard: (id: string) => Promise<void>;
     resetToDefault: (id: string) => Promise<void>;
+    saveActiveDashboard: () => Promise<void>;
 }
 
 export const useDashboardLayoutStore = create<DashboardLayoutState>()(
@@ -101,10 +102,28 @@ export const useDashboardLayoutStore = create<DashboardLayoutState>()(
                 const dashboard = get().dashboards.find((d) => d.id === id);
                 if (!dashboard) return;
                 const updated = { ...dashboard, widgets, updatedAt: new Date().toISOString() };
-                await mockDashboardService.saveDashboard(updated);
                 set((state) => ({
                     dashboards: state.dashboards.map((d) => (d.id === id ? updated : d)),
                 }));
+            },
+
+            saveActiveDashboard: async () => {
+                const { activeDashboardId, dashboards } = get();
+                if (!activeDashboardId) return;
+                const dashboard = dashboards.find((d) => d.id === activeDashboardId);
+                if (!dashboard) return;
+                
+                set({ isLoading: true, error: null });
+                try {
+                    await mockDashboardService.saveDashboard(dashboard);
+                    set({ isLoading: false });
+                } catch (err) {
+                    set({
+                        error: err instanceof Error ? err.message : 'Failed to save dashboard',
+                        isLoading: false,
+                    });
+                    throw err;
+                }
             },
 
             duplicateDashboard: async (id) => {
